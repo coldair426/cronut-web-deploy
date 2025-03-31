@@ -87,7 +87,6 @@ export default function OrderConfirmation({ params }: { params: { id: string } }
             <Box
                 sx={{
                     minHeight: '100vh',
-                    backgroundColor: '#1C1F21',
                     color: 'white',
                     display: 'flex',
                     alignItems: 'center',
@@ -103,7 +102,6 @@ export default function OrderConfirmation({ params }: { params: { id: string } }
         <Box
             sx={{
                 minHeight: '100vh',
-                backgroundColor: '#1C1F21',
                 color: 'white',
                 pb: 10,
                 width: '100%',
