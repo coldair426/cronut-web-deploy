@@ -1,12 +1,29 @@
 'use client';
-import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
+import React, { useRef, useState, useEffect, useLayoutEffect, ChangeEvent } from 'react';
 import Image from 'next/image';
-import styled from 'styled-components';
-import { face1, face2, face3, face4 } from './images';
-import { RefreshCw } from 'lucide-react';
+import { face1, face2, face3, face4 } from '../../[id]/images';
+import { RefreshCw, Copy } from 'lucide-react';
 import { StaticImport } from 'next/dist/shared/lib/get-img-props';
-import { usePathname } from 'next/navigation';
-import { Copy } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { getCookie, setCookie } from '@/utils/cookie';
+import styled from '@emotion/styled';
+import { COLORS_DARK } from '@/data';
+
+const PLACEHOLDER = '이름을 입력해주세요.';
+// const Input = styled.input`
+//     width: 100%;
+//     height: 40px;
+//     border: 1px solid #ccc;
+//     border-radius: 5px;
+//     padding: 0 10px;
+//     box-sizing: border-box;
+//     font-size: 16px;
+// `;
+
+const InputWrapper = styled.div`
+    position: relative;
+    width: 100%;
+`;
 
 const Input = styled.input`
     width: 100%;
@@ -16,6 +33,15 @@ const Input = styled.input`
     padding: 0 10px;
     box-sizing: border-box;
     font-size: 16px;
+`;
+
+const UserNameCount = styled.div`
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #555;
 `;
 
 const ReadOnlyInput = styled.input`
@@ -166,7 +192,7 @@ const BKRInput = ({
     );
 };
 const StyledButton = styled.button`
-    background-color: #8b4513;
+    background-color: ${COLORS_DARK.accent.dark};
     border: none;
     cursor: pointer;
     border-radius: 50%;
@@ -188,9 +214,9 @@ const BRKButton = styled.button`
     font-size: 16px;
     font-weight: bold;
     border-radius: 5px;
-    border: 1px solid #8b4513;
+    border: 1px solid ${COLORS_DARK.accent.dark};
     box-sizing: border-box;
-    background-color: #8b4513;
+    background-color: ${COLORS_DARK.accent.dark};
     color: #fff;
     padding: 0 10px;
     text-align: center;
@@ -201,6 +227,7 @@ const OrderPage = ({ params }: { params: { id: string } }) => {
     const baseUrl = window.location.origin;
     const currentUrl = baseUrl + usePathname();
     const images = [face1, face2, face3, face4];
+    const router = useRouter();
 
     const getRandomProfileImage = () => {
         const randomImage = images[Math.floor(Math.random() * images.length)];
@@ -210,6 +237,39 @@ const OrderPage = ({ params }: { params: { id: string } }) => {
         setRandomImage(getRandomProfileImage());
     };
     const [randomImage, setRandomImage] = useState<StaticImport>(getRandomProfileImage());
+    const [userName, setUserName] = useState<string>('');
+    const [userNamePlaceholder, setUserNamePlaceholder] = useState<string>(PLACEHOLDER);
+
+    useEffect(() => {
+        const cookieUserInfo = getCookie('BRK-UserName');
+        if (cookieUserInfo) {
+            setUserNamePlaceholder(cookieUserInfo.key);
+        }
+    }, []);
+
+    const handleOrder = () => {
+        let cookieUserInfo = getCookie('BRK-UUID');
+
+        if (!cookieUserInfo) {
+            cookieUserInfo = crypto.randomUUID();
+            setCookie('BRK-UUID', cookieUserInfo);
+        }
+
+        const nameToUse = userName || userNamePlaceholder;
+
+        if (nameToUse !== PLACEHOLDER) {
+            setCookie('BRK-UserName', nameToUse);
+            const cookieUUID = getCookie('BRK-UUID');
+            router.push(`/cafe/cart/menu/${params.id}`);
+        }
+    };
+
+    const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+        const value = event.target.value;
+        if (value.length <= 30) {
+            setUserName(value); // 최대 길이를 넘지 않도록 값 업데이트
+        }
+    };
 
     return (
         <div
@@ -262,8 +322,21 @@ const OrderPage = ({ params }: { params: { id: string } }) => {
                 </div>
             </div>
             <div style={{ fontSize: '20px', margin: '20px 0' }}>주문자 이름을 입력해주세요.</div>
-            <Input type="text" placeholder="이름" />
-            <BRKButton>주문하기</BRKButton>
+
+            {/*<Input*/}
+            {/*    type="text"*/}
+            {/*    placeholder={userNamePlaceholder}*/}
+            {/*    value={userName}*/}
+            {/*    maxLength={30}*/}
+            {/*    onChange={e => setUserName(e.target.value)}*/}
+            {/*/>*/}
+
+            <InputWrapper>
+                <Input type="text" value={userName} onChange={e => handleChange(e)} maxLength={30} />
+                <UserNameCount>{`${userName.length}/${30}`}</UserNameCount>
+            </InputWrapper>
+
+            <BRKButton onClick={handleOrder}>주문하기</BRKButton>
         </div>
     );
 };
